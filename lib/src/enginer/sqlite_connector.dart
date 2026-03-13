@@ -6,7 +6,7 @@ import 'package:maxi_sqlite/src/models/sqlite_command.dart';
 import 'package:maxi_sqlite/src/models/sqlite_configuration.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-class SqliteConnector with AsynchronouslyInitializedMixin {
+class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
   final SqliteConfiguration configuration;
 
   String? _realPath;
@@ -117,12 +117,10 @@ class SqliteConnector with AsynchronouslyInitializedMixin {
   }
 
   @override
-  void performObjectDiscard(bool itsWasInitialized) {
-    super.performObjectDiscard(itsWasInitialized);
+  void performObjectDiscard() {
+    super.performObjectDiscard();
 
-    if (itsWasInitialized) {
-      _instance?.close();
-      _instance = null;
-    }
+    _instance?.close();
+    _instance = null;
   }
 }

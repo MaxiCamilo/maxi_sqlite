@@ -7,7 +7,7 @@ import 'package:maxi_sqlite/src/enginer/sqlite_data_connector.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_mutex.dart';
 import 'package:maxi_sqlite/src/models/sqlite_command.dart';
 
-class SqliteTransaction with AsynchronouslyInitializedMixin implements SqlTransaction, SqliteMutex {
+class SqliteTransaction with DisposableMixin, AsynchronouslyInitializedMixin implements SqlTransaction, SqliteMutex {
   final SqliteMutex reserver;
 
   final _mutex = Mutex();
@@ -55,11 +55,9 @@ class SqliteTransaction with AsynchronouslyInitializedMixin implements SqlTransa
   }
 
   @override
-  void performObjectDiscard(bool itsWasInitialized) {
-    if (itsWasInitialized) {
-      reserver.release();
-    }
-    super.performObjectDiscard(itsWasInitialized);
+  void performInitializedObjectDiscard() {
+    super.performInitializedObjectDiscard();
+    reserver.release();
   }
 
   @override
@@ -132,7 +130,5 @@ class SqliteTransaction with AsynchronouslyInitializedMixin implements SqlTransa
   });
 
   @override
-  void release() {
-    
-  }
+  void release() {}
 }

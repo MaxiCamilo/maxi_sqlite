@@ -8,7 +8,7 @@ class CheckSqlfileExists with FunctionalityMixin<void> {
   const CheckSqlfileExists({required this.path});
 
   @override
-  Future<Result<void>> runFuncionality() async {
+  Future<Result<void>> runInternalFuncionality() async {
     final fileOperatorResult = FileReference.interpretRoute(route: path, isLocal: false);
     if (fileOperatorResult.itsFailure) return fileOperatorResult.cast();
 

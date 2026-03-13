@@ -5,7 +5,7 @@ import 'package:maxi_sqlite/src/enginer/sqlite_connector.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_mutex.dart';
 import 'package:maxi_sqlite/src/models/sqlite_configuration.dart';
 
-class SqliteReserver with AsynchronouslyInitializedMixin implements SqliteMutex {
+class SqliteReserver with DisposableMixin,AsynchronouslyInitializedMixin implements SqliteMutex {
   final SqliteConfiguration configuration;
 
   final _idleTimer = MaxiTimer();
