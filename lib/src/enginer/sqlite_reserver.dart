@@ -5,7 +5,7 @@ import 'package:maxi_sqlite/src/enginer/sqlite_connector.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_mutex.dart';
 import 'package:maxi_sqlite/src/models/sqlite_configuration.dart';
 
-class SqliteReserver with DisposableMixin,AsynchronouslyInitializedMixin implements SqliteMutex {
+class SqliteReserver with DisposableMixin, AsynchronouslyInitializedMixin implements SqliteMutex {
   final SqliteConfiguration configuration;
 
   final _idleTimer = MaxiTimer();
@@ -20,7 +20,9 @@ class SqliteReserver with DisposableMixin,AsynchronouslyInitializedMixin impleme
   @override
   Future<Result<void>> performInitialize() async {
     if (LifeCoordinator.isZoneHeartCanceled) {
-      return CancelationResult();
+      final cancel = CancelationResult();
+      appManager.exceptionChannel.sendItem((cancel, StackTrace.current));
+      return cancel;
     }
 
     _adapter = SqliteConnector(configuration: configuration);
