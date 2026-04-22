@@ -117,8 +117,8 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
   }
 
   @override
-  void performObjectDiscard() {
-    super.performObjectDiscard();
+  void performInitializedObjectDiscard() {
+    super.performInitializedObjectDiscard();
 
     _instance?.close();
     _instance = null;
