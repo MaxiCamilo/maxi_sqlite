@@ -86,7 +86,7 @@ class SqliteStructure implements SqlStructure {
         return tableResult.cast();
       }
 
-      return tableResult.content.getColumnByName(columnName: 'name', caseSensitivity: true).select((x) => x.cast<String>().map((x) => x.toLowerCase()).toList());
+      return tableResult.content.getColumnByName(columnName: 'name', caseSensitivity: true).onCorrectSelect((x) => x.cast<String>().map((x) => x.toLowerCase()).toList());
     });
   }
 }
