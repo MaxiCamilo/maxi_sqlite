@@ -1,16 +1,15 @@
 import 'package:maxi_framework/maxi_framework.dart';
 import 'package:maxi_sql/maxi_sql.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_data_connector.dart';
-import 'package:maxi_sqlite/src/enginer/sqlite_mutex.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_reserver.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_structure.dart';
 import 'package:maxi_sqlite/src/enginer/sqlite_transaction.dart';
 import 'package:maxi_sqlite/src/models/sqlite_configuration.dart';
 
-class SqliteEngine with DisposableMixin implements SqlEngine {
+class SqliteEngine with DisposableMixin implements SqlEngine, AsynchronouslyInitialized {
   final SqliteConfiguration configuration;
 
-  late final SqliteMutex _reserver;
+  late final SqliteReserver _reserver;
 
   @override
   bool get isActive => !itWasDiscarded;
@@ -35,4 +34,10 @@ class SqliteEngine with DisposableMixin implements SqlEngine {
   void performObjectDiscard() {
     _reserver.dispose();
   }
+
+  @override
+  bool get isInitialized => _reserver.isInitialized;
+
+  @override
+  Future<Result<void>> initialize() => _reserver.initialize();
 }

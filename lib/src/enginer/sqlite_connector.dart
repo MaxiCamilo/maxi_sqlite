@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:maxi_framework/maxi_framework.dart';
 import 'package:maxi_sqlite/src/logic/check_sqlfile_exists.dart';
+import 'package:maxi_sqlite/src/logic/distill_parameters.dart';
 import 'package:maxi_sqlite/src/models/sqlite_command.dart';
 import 'package:maxi_sqlite/src/models/sqlite_configuration.dart';
+//import 'package:maxi_sqlite/src/native_libs/load_sqlite_lib.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
@@ -17,6 +19,12 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
 
   @override
   Future<Result<void>> performInitialize() async {
+    /*
+    final loadResult = await sqliteLibLoader.initialize();
+    if (loadResult.itsFailure) {
+      return loadResult.cast();
+    }*/
+
     try {
       if (configuration.isMemoryDB) {
         _instance = sqlite3.openInMemory();
@@ -53,6 +61,7 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
     if (checkExists.itsFailure) {
       return checkExists.cast();
     }
+
     final result = volatileFunction(
       error: (ex, st) => ExceptionResult(
         exception: ex,
@@ -78,6 +87,11 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
       return initResult.cast();
     }
 
+    final distillResult = DistillParameters(rawValues: command.parameters).execute();
+    if (distillResult.itsFailure) {
+      return distillResult.cast();
+    }
+
     return volatileFunction(
       error: (ex, st) => ExceptionResult(
         exception: ex,
@@ -87,7 +101,7 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
           productionOration: const FixedOration(message: 'An error occurred while executing the command on the database. Please verify that the command is correct and that the database is not corrupted'),
         ),
       ),
-      function: () => _instance!.execute(command.sql, command.parameters),
+      function: () => _instance!.execute(command.sql, distillResult.content),
     );
   }
 
@@ -95,6 +109,11 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
     final initResult = await initialize();
     if (initResult.itsFailure) {
       return initResult.cast();
+    }
+
+    final distillResult = DistillParameters(rawValues: command.parameters).execute();
+    if (distillResult.itsFailure) {
+      return distillResult.cast();
     }
 
     final result = volatileFunction(
@@ -106,21 +125,33 @@ class SqliteConnector with DisposableMixin, AsynchronouslyInitializedMixin {
           productionOration: const FixedOration(message: 'An error occurred while executing the query on the database. Please verify that the query is correct and that the database is not corrupted'),
         ),
       ),
-      function: () => _instance!.select(command.sql, command.parameters),
+      function: () => _instance!.select(command.sql, distillResult.content),
     );
 
     if (result.itsFailure) {
       return result.cast();
     }
 
-    return TableResult.withColumnsAndValues(columnsName: result.content.columnNames, values: result.content.rows).asResultValue();
+    if (result.content.isEmpty) {
+      return TableResult.withColumnsAndValues(columnsName: result.content.columnNames, values: []);
+    }
+
+    if (result.content is ResultSet) {
+      final resultSet = result.content as ResultSet;
+      return TableResult.withColumnsAndValues(columnsName: resultSet.columnNames, values: resultSet.toList());
+    } else {
+      return NegativeResult.controller(
+        code: ErrorCode.implementationFailure,
+        message: const FixedOration(message: 'The query execution did not return a ResultSet, this should not happen'),
+      );
+    }
   }
 
   @override
   void performInitializedObjectDiscard() {
     super.performInitializedObjectDiscard();
 
-    _instance?.close();
+    _instance?.dispose();
     _instance = null;
   }
 }
